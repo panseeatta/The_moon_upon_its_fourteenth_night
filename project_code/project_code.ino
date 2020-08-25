@@ -19,16 +19,15 @@ AudioControlSGTL5000     sgtl5000_1;     //xy=539,135
 // GUItool: end automatically generated code-------------------
 
 
-// Use these if SD card is in the Audio Shield// ---------
+// Use these if SD card is in the Audio Shield// --
 #define SDCARD_CS_PIN    10
 #define SDCARD_MOSI_PIN  7
 #define SDCARD_SCK_PIN   14
 
-//for kalman filter smoothing------------------------------
-SimpleKalmanFilter simpleKalmanFilter(50, 50, 0.3);
+//for kalman filter smoothing----------------------------------------
+SimpleKalmanFilter simpleKalmanFilter(50, 50, 0.008);
 // 1st 2 values are the same, estimated amt of variation,
 // last v is btwn 0.001 - 1. the smaller the smoother.
-
 
 void setup()   {
   Serial.begin(9600);
@@ -59,10 +58,6 @@ void setTouchReadSensitivity(uint8_t t_current, uint8_t num_scans, uint8_t t_pre
   if (t_prescale > 7) t_prescale = 7;
 
   //update variables
-  // C=2, n=9, p=2 gives approx 0.02 pF sensitivity and 1200 pF range
-  // Lower current, higher number of scans, and higher prescaler
-  // increase sensitivity, but the trade-off is longer measurement
-  // time and decreased range.
   CURRENT = t_current; //0-15, default is 2,
   NSCAN = num_scans; //number of times to scan, 0-31, default is 9;
   PRESCALE = t_prescale; //0-7,default is 2
@@ -81,23 +76,39 @@ void loop()
     delay(10); // wait for library to parse WAV info
   }
 
-  // touchread----------------------
+  // touchread input
   int touch = touchRead(29);
 
-  // smooth value --------------------
+  // smooth value
   float touchSmoothed = simpleKalmanFilter.updateEstimate(touch);
 
-  float gain1 = 20; //(float)touch - 8000;
-  //gain1 = gain1 / 60;
+  int touchMin = 2275; // calculating gain from range----------------=--
+  int touchMax = 2350;
+  int increment = (touchMax - touchMin) / 24;
+  //laptop: min 2830, max 2900
+  //wall plug: min 2275, max 2350
+  //min should be whatever the rouchread value is when you're at the farthest point.
+  // max is the value when you're nearest
+  // lower is clearer, higher is more garbled. you want it right in the middle where it's
+  // clear from close, but garbled from far
 
-  float maxGain = 100; // maximum gain-------------
+  // if sound is garbled no matter what, decrease both numbers
+  // if sound is clear no matter what, increase numbers
+  // (because if touchsmoothed - too small a #, then it's too high and defaults to maxgain)
+
+  float gain1 = touchSmoothed - touchMin;
+  gain1 = gain1 / increment;
+
+  float maxGain = 24;
   if (gain1 > maxGain) {
     gain1 = maxGain;
   }
   if (gain1 < 0) {
     gain1 = 0;
   }
-  float gain2 = 0;  //(maxGain - gain1)*0.001
+  float noiseMod = 0.1; // noise modifier
+
+  float gain2 = (maxGain - gain1) * noiseMod;
 
   mixer1.gain(0, gain1);
   mixer1.gain(1, gain2);
@@ -107,11 +118,11 @@ void loop()
   //Serial.print("    ");
 
   Serial.print("touch = ");
-  Serial.print(touch-2100);
+  Serial.print(touch - touchMin);
   Serial.print("    ");
 
   Serial.print("smoothed = ");
-  Serial.print(touchSmoothed-2100);
+  Serial.print(touchSmoothed - touchMin);
   Serial.print("    ");
 
   Serial.print("gain1 = ");
@@ -120,16 +131,17 @@ void loop()
   Serial.print("gain2 = ");
   Serial.println(gain2);
 
+
   // blink the LED without delays
-  if (blinkTime < 250) {
+  if (blinkTime < 100) {
     digitalWrite(13, LOW);
-  } else if (blinkTime < 500) {
+  } else if (blinkTime < 20) {
     digitalWrite(13, HIGH);
   } else {
     blinkTime = 0; // start blink cycle over again
   }
 
-  setTouchReadSensitivity(15, 31, 1); // set sensitivity -----------------
+  setTouchReadSensitivity(15, 31, 1); // set sensitivity -------------------------------
   // (current ,numscans, prescaler)
   // C=2, n=9, p=2 gives approx 0.02 pF sensitivity and 1200 pF range
   // c max = 15, n max = 31, p max =  7
