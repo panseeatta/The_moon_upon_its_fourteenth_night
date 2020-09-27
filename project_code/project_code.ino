@@ -25,7 +25,7 @@ AudioControlSGTL5000     sgtl5000_1;     //xy=539,135
 #define SDCARD_SCK_PIN   14
 
 //for kalman filter smoothing----------------------------------------
-SimpleKalmanFilter simpleKalmanFilter(50, 50, 0.008);
+SimpleKalmanFilter simpleKalmanFilter(50, 50, 0.009);
 // 1st 2 values are the same, estimated amt of variation,
 // last v is btwn 0.001 - 1. the smaller the smoother.
 
@@ -82,11 +82,11 @@ void loop()
   // smooth value
   float touchSmoothed = simpleKalmanFilter.updateEstimate(touch);
 
-  int touchMin = 2275; // calculating gain from range----------------=--
-  int touchMax = 2350;
+  int touchMin = 2150; // calculating gain from range----------------=--
+  int touchMax = 2225;
   int increment = (touchMax - touchMin) / 24;
   //laptop: min 2830, max 2900
-  //wall plug: min 2275, max 2350
+  //wall plug: min 2100, max 2175
   //min should be whatever the rouchread value is when you're at the farthest point.
   // max is the value when you're nearest
   // lower is clearer, higher is more garbled. you want it right in the middle where it's
