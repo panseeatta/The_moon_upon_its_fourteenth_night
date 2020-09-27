@@ -1,6 +1,7 @@
 # The moon upon its fourteenth night
  Interactive audio sculpture created as part of "To Be Continued: Troubling the Queer Archive" at the Carleton University Art Gallery, 2020
 ----------------------------------------------------------------------
+[To download the project audio, click this link](https://github.com/seahorseshoes/The_moon_upon_its_fourteenth_night/raw/master/Story%20audio%20full.mp3)
 
 ![sculpture image 1](/Project%20documentation_images%20and%20video/20200810_215722.jpg) <!-- .element height="30%" width="30%" -->
 
